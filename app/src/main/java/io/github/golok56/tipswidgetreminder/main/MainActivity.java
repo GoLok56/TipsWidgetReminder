@@ -1,5 +1,7 @@
 package io.github.golok56.tipswidgetreminder.main;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -15,6 +17,7 @@ import butterknife.ButterKnife;
 import io.github.golok56.tipswidgetreminder.PokemonCard;
 import io.github.golok56.tipswidgetreminder.R;
 import io.github.golok56.tipswidgetreminder.services.RetrofitApp;
+import io.github.golok56.tipswidgetreminder.services.sqlite.CardHelper;
 
 public class MainActivity extends AppCompatActivity implements MainContract.View {
 
@@ -27,6 +30,10 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
     private MainPresenter mPresenter;
     private MainAdapter mAdapter;
+
+    private CardHelper cardHelper;
+
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +48,9 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         mAdapter = new MainAdapter(this);
         rvMain.setAdapter(mAdapter);
         swlMain.setOnRefreshListener(() -> mPresenter.fetchPokemonDataFromInternet());
+
+        sharedPreferences = getSharedPreferences("sharedpref", Context.MODE_PRIVATE);
+        cardHelper = CardHelper.getInstance(this);
     }
 
     @Override
@@ -65,9 +75,19 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
     @Override
     public void showPokemonList(List<PokemonCard> pokemons) {
-        swlMain.setRefreshing(false);
         mAdapter.updateData(pokemons);
         rvMain.setVisibility(View.VISIBLE);
         tvMain.setVisibility(View.GONE);
+
+        boolean isFirstTime = sharedPreferences.getBoolean("isFirstTime", true);
+        if (isFirstTime) {
+            cardHelper.open();
+            for (PokemonCard pokemonCard : pokemons) {
+                cardHelper.insert(pokemonCard);
+            }
+            cardHelper.close();
+            sharedPreferences.edit().putBoolean("isFirstTime", false).apply();
+        }
+        swlMain.setRefreshing(false);
     }
 }
