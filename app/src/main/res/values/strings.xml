@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Tips Widget Reminder</string>
+    <string name="empty_text">Kartu kosong</string>
+    <string name="add_widget">Add widget</string>
 </resources>
